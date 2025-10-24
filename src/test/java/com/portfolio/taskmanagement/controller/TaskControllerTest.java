@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -46,6 +48,7 @@ class TaskControllerTest {
     }
 
     @Test
+    @WithMockUser
     void getAllTasks_ShouldReturnListOfTasks() throws Exception {
         List<TaskDTO> tasks = Arrays.asList(testTaskDTO);
         when(taskService.getAllTasksForUser(1L)).thenReturn(tasks);
@@ -57,13 +60,15 @@ class TaskControllerTest {
     }
 
     @Test
+    @WithMockUser
     void createTask_ShouldReturnCreatedTask() throws Exception {
         when(taskService.createTask(any(TaskDTO.class), eq(1L))).thenReturn(testTaskDTO);
 
         mockMvc.perform(post("/api/tasks")
                 .param("userId", "1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(testTaskDTO)))
+                .content(objectMapper.writeValueAsString(testTaskDTO))
+                .with(csrf()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value("Test Task"));
     }
